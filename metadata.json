@@ -1,0 +1,6 @@
+{
+  "name": "SpendWise - Smart Personal Finance & Wealth Intelligence",
+  "description": "Multi-page financial management and wealth intelligence platform with real-time budget tracking, credit card optimization, savings goals, and life moment planning.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
