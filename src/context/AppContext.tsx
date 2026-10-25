@@ -22,7 +22,25 @@ interface AppContextType {
   isLoggedIn: boolean;
   login: (email: string, name?: string) => void;
   logout: () => void;
-  registerUser: (name: string, email: string, salary: number, payday: number) => void;
+  workspaceMode: 'personal' | 'demo';
+  startCleanWorkspace: (options?: {
+    name?: string;
+    email?: string;
+    monthlySalary?: number;
+    paydayDate?: number;
+    startingBalance?: number;
+    bankName?: string;
+    primaryCardName?: string;
+  }) => void;
+  loadDemoWorkspace: () => void;
+  registerUser: (
+    name: string,
+    email: string,
+    salary: number,
+    payday: number,
+    startingBalance?: number,
+    bankName?: string
+  ) => void;
   resetDemoData: () => void;
 
   isBalanceHidden: boolean;
@@ -820,6 +838,7 @@ function saveToStorage<T>(key: string, value: T): void {
 
 export function AppProvider({ children }: { children: ReactNode }) {
   // State with LocalStorage Persistence
+  const [workspaceMode, setWorkspaceMode] = useState<'personal' | 'demo'>(() => loadFromStorage('workspaceMode', 'demo'));
   const [user, setUser] = useState<UserProfile>(() => loadFromStorage('user', INITIAL_USER));
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => loadFromStorage('isLoggedIn', true));
   const [isBalanceHidden, setIsBalanceHidden] = useState<boolean>(() => loadFromStorage('isBalanceHidden', false));
@@ -840,6 +859,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [adminMerchants, setAdminMerchants] = useState<AdminMerchant[]>(() => loadFromStorage('adminMerchants', INITIAL_ADMIN_MERCHANTS));
 
   // Sync state changes to storage
+  useEffect(() => saveToStorage('workspaceMode', workspaceMode), [workspaceMode]);
   useEffect(() => saveToStorage('user', user), [user]);
   useEffect(() => saveToStorage('isLoggedIn', isLoggedIn), [isLoggedIn]);
   useEffect(() => saveToStorage('isBalanceHidden', isBalanceHidden), [isBalanceHidden]);
@@ -855,6 +875,128 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => saveToStorage('notifications', notifications), [notifications]);
   useEffect(() => saveToStorage('adminUsers', adminUsers), [adminUsers]);
 
+  // Clean personal workspace for real personal expense tracking (0 demo transactions)
+  const startCleanWorkspace = (options?: {
+    name?: string;
+    email?: string;
+    monthlySalary?: number;
+    paydayDate?: number;
+    startingBalance?: number;
+    bankName?: string;
+    primaryCardName?: string;
+  }) => {
+    const cleanUser: UserProfile = {
+      id: `user-${Date.now()}`,
+      name: options?.name?.trim() || 'My Expenses',
+      email: options?.email?.trim() || 'me@spendwise.app',
+      isPro: true,
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256',
+      currency: '₹',
+      monthlySalary: options?.monthlySalary ?? 50000,
+      paydayDate: options?.paydayDate ?? 30,
+      cycleStartDay: 1,
+      cycleEndDay: 30,
+    };
+
+    const cleanAccounts: Account[] = [
+      {
+        id: `acc-${Date.now()}`,
+        name: options?.bankName ? `${options.bankName} Salary Account` : 'Primary Salary Account',
+        type: 'bank',
+        balance: options?.startingBalance !== undefined ? options.startingBalance : 35000,
+        accountNumberMasked: '•••• 1001',
+        institution: options?.bankName || 'HDFC Bank',
+        color: '#174D42',
+        isPrimary: true,
+        lastSynced: 'Just now',
+      },
+    ];
+
+    const cleanCards: CreditCard[] = [
+      {
+        id: `card-${Date.now()}`,
+        name: options?.primaryCardName || 'Primary Credit Card',
+        bank: options?.bankName || 'HDFC Bank',
+        cardNumberMasked: '•••• •••• •••• 8842',
+        cardNetwork: 'visa',
+        tier: 'Signature Privilege',
+        totalLimit: 100000,
+        usedAmount: 0,
+        availableLimit: 100000,
+        dueDate: 'Nov 30, 2026',
+        billingCycle: '1st - 30th Nov',
+        apr: 3.4,
+        rewardPoints: 0,
+        cashbackRate: '5% on dining, 2% all',
+        colorTheme: '#174D42',
+        isAutoDebitEnabled: true,
+      },
+    ];
+
+    const cleanBudgets: Budget[] = [
+      { id: 'b-1', category: 'Groceries', allocatedAmount: 8000, spentAmount: 0, period: 'monthly', alertThresholdPercent: 85, icon: 'shopping-cart', color: '#174D42' },
+      { id: 'b-2', category: 'Dining & Food', allocatedAmount: 5000, spentAmount: 0, period: 'monthly', alertThresholdPercent: 80, icon: 'coffee', color: '#426835' },
+      { id: 'b-3', category: 'Discretionary', allocatedAmount: 6000, spentAmount: 0, period: 'monthly', alertThresholdPercent: 75, icon: 'shopping-bag', color: '#9CD1C2' },
+      { id: 'b-4', category: 'Fuel & Transit', allocatedAmount: 4000, spentAmount: 0, period: 'monthly', alertThresholdPercent: 90, icon: 'fuel', color: '#FAE0AA' },
+      { id: 'b-5', category: 'Subscriptions', allocatedAmount: 3000, spentAmount: 0, period: 'monthly', alertThresholdPercent: 90, icon: 'tv', color: '#53421A' },
+    ];
+
+    const cleanGoals: SavingsGoal[] = [
+      {
+        id: 'goal-1',
+        title: 'Emergency Reserve Fund',
+        targetAmount: 50000,
+        currentAmount: 5000,
+        targetDate: '31 Dec 2026',
+        category: 'emergency',
+        autoSaveMonthly: 5000,
+        isLocked: false,
+        notes: 'Target ₹50,000 for unexpected safety reserve',
+      },
+    ];
+
+    const cleanNotifs: NotificationItem[] = [
+      {
+        id: 'notif-1',
+        title: 'Personal Workspace Ready!',
+        message: 'Your ledger is clean with 0 demo transactions. Tap + Add Expense to begin tracking your expenses.',
+        timestamp: 'Just now',
+        type: 'success',
+        isRead: false,
+      },
+    ];
+
+    setUser(cleanUser);
+    setIsLoggedIn(true);
+    setWorkspaceMode('personal');
+    setAccounts(cleanAccounts);
+    setCards(cleanCards);
+    setTransactions([]); // ZERO pre-existing transactions!
+    setBudgets(cleanBudgets);
+    setSavingsGoals(cleanGoals);
+    setLifeMoments([]);
+    setSubscriptions([]);
+    setWishlist([]);
+    setNotifications(cleanNotifs);
+    setIsAiSignalDismissed(false);
+  };
+
+  const loadDemoWorkspace = () => {
+    setUser(INITIAL_USER);
+    setIsLoggedIn(true);
+    setWorkspaceMode('demo');
+    setAccounts(INITIAL_ACCOUNTS);
+    setCards(INITIAL_CARDS);
+    setTransactions(INITIAL_TRANSACTIONS);
+    setBudgets(INITIAL_BUDGETS);
+    setSavingsGoals(INITIAL_GOALS);
+    setLifeMoments(INITIAL_MOMENTS);
+    setSubscriptions(INITIAL_SUBSCRIPTIONS);
+    setWishlist(INITIAL_WISHLIST);
+    setNotifications(INITIAL_NOTIFICATIONS);
+    setIsAiSignalDismissed(false);
+  };
+
   // Auth Operations
   const login = (email: string, name?: string) => {
     setIsLoggedIn(true);
@@ -869,36 +1011,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setIsLoggedIn(false);
   };
 
-  const registerUser = (name: string, email: string, salary: number, payday: number) => {
-    setIsLoggedIn(true);
-    setUser({
-      id: `user-${Date.now()}`,
+  const registerUser = (
+    name: string,
+    email: string,
+    salary: number,
+    payday: number,
+    startingBalance?: number,
+    bankName?: string
+  ) => {
+    startCleanWorkspace({
       name,
       email,
-      isPro: true,
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256',
-      currency: '₹',
       monthlySalary: salary,
       paydayDate: payday,
-      cycleStartDay: 1,
-      cycleEndDay: 30,
+      startingBalance: startingBalance !== undefined ? startingBalance : 35000,
+      bankName: bankName || 'Primary Salary Account',
     });
   };
 
   const resetDemoData = () => {
-    setUser(INITIAL_USER);
-    setIsLoggedIn(true);
+    loadDemoWorkspace();
     setIsBalanceHidden(false);
-    setIsAiSignalDismissed(false);
-    setAccounts(INITIAL_ACCOUNTS);
-    setCards(INITIAL_CARDS);
-    setTransactions(INITIAL_TRANSACTIONS);
-    setBudgets(INITIAL_BUDGETS);
-    setSavingsGoals(INITIAL_GOALS);
-    setLifeMoments(INITIAL_MOMENTS);
-    setSubscriptions(INITIAL_SUBSCRIPTIONS);
-    setWishlist(INITIAL_WISHLIST);
-    setNotifications(INITIAL_NOTIFICATIONS);
     setAdminUsers(INITIAL_ADMIN_USERS);
     if (typeof window !== 'undefined') {
       localStorage.clear();
@@ -915,17 +1048,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [accounts]);
 
   const totalCardObligations = useMemo(() => {
-    // Primary card due is 12,500 by default from Stitch
     return cards.reduce((sum, c) => sum + Number(c.usedAmount || 0), 0);
   }, [cards]);
 
   // Reserved bills: Locked for auto-debit (card obligations + recurring scheduled bills)
   const reservedBills = useMemo(() => {
-    const primaryCardDue = cards[0]?.usedAmount || 12500;
-    // Reserved fixed auto-debit bills (rent, utilities, insurance) total ₹12,000 + card obligations ₹12,500 = ₹24,500
-    const fixedReservedBills = 12000;
+    const primaryCardDue = cards[0] ? Number(cards[0].usedAmount || 0) : 0;
+    const activeSubAmount = subscriptions
+      .filter((s) => s.isActive)
+      .reduce((sum, s) => sum + Number(s.amount || 0), 0);
+    // If user has demo card due of 12500, fixed reserved bills is 12000, else dynamic active subscriptions
+    const fixedReservedBills = activeSubAmount > 0 ? activeSubAmount : (cards.length > 0 && cards[0].usedAmount > 0 ? 12000 : 0);
     return primaryCardDue + fixedReservedBills;
-  }, [cards]);
+  }, [cards, subscriptions]);
 
   const safeToSpend = useMemo(() => {
     return Math.max(0, totalAvailableBalance - reservedBills);
@@ -1309,6 +1444,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         isLoggedIn,
         login,
         logout,
+        workspaceMode,
+        startCleanWorkspace,
+        loadDemoWorkspace,
         registerUser,
         resetDemoData,
         isBalanceHidden,

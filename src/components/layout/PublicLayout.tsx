@@ -4,7 +4,7 @@ import { Wallet, ShieldCheck, ArrowRight } from 'lucide-react';
 
 export function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-[#F6F8F1] text-[#1C302A] flex flex-col antialiased">
+    <div className="min-h-screen bg-[#F6F8F1] text-[#1C302A] flex flex-col antialiased w-full max-w-full overflow-x-hidden">
       {/* Public Header */}
       <header className="sticky top-0 z-40 bg-[#F6F8F1]/90 backdrop-blur-md border-b border-[#DFE8DC]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-18 flex items-center justify-between">
@@ -43,7 +43,7 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col">{children}</main>
+      <main className="flex-1 flex flex-col w-full max-w-full overflow-x-hidden">{children}</main>
 
       {/* Public Footer */}
       <footer className="bg-white border-t border-[#DFE8DC] py-12 px-4 sm:px-6 mt-16">

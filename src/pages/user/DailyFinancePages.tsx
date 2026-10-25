@@ -156,47 +156,68 @@ export function TransactionsPage() {
       </div>
 
       {/* Transactions Table / List */}
-      <div className="bg-white rounded-2xl border border-[#DFE8DC] overflow-hidden shadow-sm">
-        <div className="p-4 border-b border-[#DFE8DC] flex items-center justify-between text-xs text-[#64756D]">
+      <div className="bg-white rounded-2xl border border-[#DFE8DC] overflow-hidden shadow-sm w-full max-w-full">
+        <div className="p-3.5 sm:p-4 border-b border-[#DFE8DC] flex items-center justify-between text-xs text-[#64756D]">
           <span>Showing {filtered.length} entries</span>
           <span>Encrypted Local Sync</span>
         </div>
 
         {filtered.length === 0 ? (
-          <div className="p-12 text-center text-xs text-[#64756D]">
-            No transactions match the selected filter.
+          <div className="p-10 sm:p-14 text-center flex flex-col items-center justify-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-[#E6F3DD] text-[#174D42] flex items-center justify-center shadow-xs">
+              <ReceiptText className="w-6 h-6" />
+            </div>
+            <div>
+              <p className="font-heading text-sm font-bold text-[#103C34]">
+                {transactions.length === 0 ? 'Your Expense Ledger is Fresh & Clean' : 'No transactions match filters'}
+              </p>
+              <p className="text-xs text-[#64756D] max-w-sm mt-1">
+                {transactions.length === 0
+                  ? 'Ready to track your personal finances? Record your first spend or incoming salary to begin.'
+                  : 'Try clearing your search keyword or selecting "All Categories".'}
+              </p>
+            </div>
+            {transactions.length === 0 && (
+              <Link
+                to="/app/transactions/new"
+                className="mt-2 px-4 py-2 rounded-xl bg-[#174D42] text-white text-xs font-bold hover:bg-[#103C34] flex items-center gap-1.5 shadow-sm transition-all"
+              >
+                <PlusCircle className="w-4 h-4 text-[#B8E4A5]" />
+                <span>+ Log First Expense</span>
+              </Link>
+            )}
           </div>
         ) : (
           <div className="divide-y divide-[#DFE8DC]">
             {filtered.map((tx) => (
               <div
                 key={tx.id}
-                className="p-4 flex items-center justify-between hover:bg-[#F6F8F1] transition-colors"
+                className="p-3 sm:p-4 flex items-center justify-between hover:bg-[#F6F8F1] transition-colors gap-2 min-w-0 overflow-hidden"
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#EDF3E9] text-[#174D42] flex items-center justify-center font-bold">
-                    <ReceiptText className="w-5 h-5" />
+                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#EDF3E9] text-[#174D42] flex items-center justify-center font-bold shrink-0">
+                    <ReceiptText className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-bold text-[#1C302A]">{tx.title}</p>
+                      <p className="text-xs sm:text-sm font-bold text-[#1C302A] truncate">{tx.title}</p>
                       {tx.cashbackEarned ? (
-                        <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-[#E6F3DD] text-[#27865D]">
+                        <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-[#E6F3DD] text-[#27865D] shrink-0">
                           +₹{tx.cashbackEarned} Back
                         </span>
                       ) : null}
                     </div>
-                    <p className="text-xs text-[#64756D]">
+                    <p className="text-[11px] sm:text-xs text-[#64756D] truncate">
                       {tx.category} • {tx.paymentMethod} • {tx.date} {tx.time ? `at ${tx.time}` : ''}
                     </p>
-                    {tx.notes && <p className="text-[11px] text-[#64756D]/80 italic mt-0.5">{tx.notes}</p>}
+                    {tx.notes && <p className="text-[11px] text-[#64756D]/80 italic mt-0.5 truncate">{tx.notes}</p>}
                   </div>
                 </div>
 
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2.5 sm:gap-4 shrink-0">
                   <div className="text-right">
                     <p
-                      className={`text-sm font-bold font-mono-num ${
+                      className={`text-xs sm:text-sm font-bold font-mono-num ${
                         tx.type === 'income' ? 'text-[#27865D]' : 'text-[#1C302A]'
                       }`}
                     >

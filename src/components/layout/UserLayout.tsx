@@ -39,6 +39,9 @@ export function UserLayout({ children }: { children: React.ReactNode }) {
   const { currentPath, navigate } = useRouter();
   const {
     user,
+    workspaceMode,
+    startCleanWorkspace,
+    loadDemoWorkspace,
     logout,
     resetDemoData,
     isBalanceHidden,
@@ -415,13 +418,24 @@ export function UserLayout({ children }: { children: React.ReactNode }) {
 
                   <button
                     onClick={() => {
-                      resetDemoData();
+                      startCleanWorkspace({ name: 'Personal User', email: 'user@spendwise.app' });
+                      setIsProfileDropdownOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-[#174D42] hover:bg-[#E6F3DD]"
+                  >
+                    <PlusCircle className="w-4 h-4 text-[#27865D]" />
+                    <span>Start Clean for My Expenses</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      loadDemoWorkspace();
                       setIsProfileDropdownOpen(false);
                     }}
                     className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-[#64756D] hover:bg-[#EDF3E9]"
                   >
                     <RotateCcw className="w-4 h-4" />
-                    <span>Reset to Demo Data</span>
+                    <span>Load Demo Data (Rohan)</span>
                   </button>
 
                   <div className="pt-1 mt-1 border-t border-[#DFE8DC]">
@@ -445,7 +459,7 @@ export function UserLayout({ children }: { children: React.ReactNode }) {
       </header>
 
       {/* Main Body with Sidebar + Content */}
-      <div className="flex-1 flex max-w-[1600px] w-full mx-auto">
+      <div className="flex-1 flex max-w-[1600px] w-full mx-auto overflow-x-hidden">
         {/* Desktop Sidebar (1440px / 1280px) */}
         <aside className="hidden lg:flex flex-col w-64 shrink-0 border-r border-[#DFE8DC] bg-white/70 backdrop-blur-sm p-4 sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto">
           <div className="flex-1 space-y-6">
@@ -607,14 +621,14 @@ export function UserLayout({ children }: { children: React.ReactNode }) {
         )}
 
         {/* Responsive Content Area */}
-        <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 pb-28 lg:pb-12">
+        <main className="flex-1 min-w-0 w-full max-w-full overflow-x-hidden p-3.5 sm:p-6 lg:p-8 pb-24 lg:pb-12">
           {children}
         </main>
       </div>
 
       {/* Mobile Sticky Bottom Navigation Bar */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white/95 backdrop-blur-md border-t border-[#DFE8DC] shadow-[0_-8px_30px_rgba(16,60,52,0.08)]">
-        <div className="flex items-center justify-around h-16 max-w-md mx-auto px-2">
+        <div className="flex items-center justify-around h-16 w-full max-w-md mx-auto px-1 sm:px-2">
           <Link
             to="/app/dashboard"
             className={`flex flex-col items-center justify-center flex-1 h-full gap-1 text-[11px] font-medium transition-colors ${
@@ -639,7 +653,7 @@ export function UserLayout({ children }: { children: React.ReactNode }) {
           <div className="flex-1 flex items-center justify-center -mt-6">
             <Link
               to="/app/transactions/new"
-              className="w-13 h-13 rounded-full bg-[#174D42] text-white flex items-center justify-center shadow-[0_10px_20px_rgba(23,77,66,0.35)] ring-4 ring-[#F6F8F1] active:scale-95 transition-transform"
+              className="w-12 h-12 rounded-full bg-[#174D42] text-white flex items-center justify-center shadow-[0_10px_20px_rgba(23,77,66,0.35)] ring-4 ring-[#F6F8F1] active:scale-95 transition-transform"
               title="Add New Transaction"
             >
               <PlusCircle className="w-6 h-6 text-[#B8E4A5]" />

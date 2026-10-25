@@ -23,12 +23,16 @@ import {
   X,
   Check,
   RotateCcw,
+  ReceiptText,
 } from 'lucide-react';
 
 export function UserDashboardPage() {
   const { navigate } = useRouter();
   const {
     user,
+    workspaceMode,
+    startCleanWorkspace,
+    loadDemoWorkspace,
     isBalanceHidden,
     setIsBalanceHidden,
     isAiSignalDismissed,
@@ -128,11 +132,12 @@ export function UserDashboardPage() {
   };
 
   // SVG Donut calculation from real dynamic category spending
-  const grocerySpend = categorySpending['Groceries'] || 6800;
-  const diningSpend = categorySpending['Dining & Food'] || 5200;
-  const discSpend = categorySpending['Discretionary'] || 6000;
-  const fuelSpend = categorySpending['Fuel & Transit'] || 4500;
-  const subSpend = categorySpending['Subscriptions'] || 4150;
+  const isSpendingEmpty = totalSpentThisCycle === 0;
+  const grocerySpend = isSpendingEmpty ? 0 : (categorySpending['Groceries'] || 0);
+  const diningSpend = isSpendingEmpty ? 0 : (categorySpending['Dining & Food'] || 0);
+  const discSpend = isSpendingEmpty ? 0 : (categorySpending['Discretionary'] || 0);
+  const fuelSpend = isSpendingEmpty ? 0 : (categorySpending['Fuel & Transit'] || 0);
+  const subSpend = isSpendingEmpty ? 0 : (categorySpending['Subscriptions'] || 0);
   const totalCategorySum = Math.max(1, grocerySpend + diningSpend + discSpend + fuelSpend + subSpend);
 
   const circum = 2 * Math.PI * 38; // ~238.76
@@ -143,7 +148,7 @@ export function UserDashboardPage() {
   const subLen = (subSpend / totalCategorySum) * circum;
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
+    <div className="w-full max-w-full overflow-x-hidden space-y-5 sm:space-y-6">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-20 right-4 z-50 bg-[#174D42] text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-2 border border-[#B8E4A5]/40 text-xs font-semibold animate-in fade-in slide-in-from-top-4">
@@ -152,41 +157,76 @@ export function UserDashboardPage() {
         </div>
       )}
 
+      {/* Top Workspace State Switch Banner */}
+      {workspaceMode === 'demo' ? (
+        <div className="p-3 sm:p-3.5 rounded-2xl bg-[#E6F3DD] border border-[#B8E4A5] text-[#174D42] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shadow-xs">
+          <div className="flex items-center gap-2 text-xs">
+            <Sparkles className="w-4 h-4 text-[#27865D] shrink-0" />
+            <span>Currently previewing <strong>Sample Demo Mode (Rohan Sharma)</strong>.</span>
+          </div>
+          <button
+            onClick={() => {
+              startCleanWorkspace({ name: 'Personal User', email: 'me@spendwise.app' });
+              showToast('Clean personal workspace activated with 0 transactions!');
+            }}
+            className="px-3.5 py-1.5 rounded-xl bg-[#174D42] text-white text-xs font-bold hover:bg-[#103C34] active:scale-95 transition-all text-center shrink-0 shadow-xs"
+          >
+            Start Clean Workspace (0 Transactions)
+          </button>
+        </div>
+      ) : (
+        <div className="p-3 sm:p-3.5 rounded-2xl bg-white border border-[#DFE8DC] text-[#103C34] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shadow-xs">
+          <div className="flex items-center gap-2 text-xs min-w-0">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#27865D] animate-pulse shrink-0" />
+            <span className="truncate"><strong>Personal Expense Mode</strong>: Clean ledger with {transactions.length} personal transactions.</span>
+          </div>
+          <button
+            onClick={() => {
+              loadDemoWorkspace();
+              showToast('Switched to Sample Demo Data (Rohan)');
+            }}
+            className="text-xs font-bold text-[#174D42] hover:underline shrink-0 text-left sm:text-right"
+          >
+            Load Sample Demo Data
+          </button>
+        </div>
+      )}
+
       {/* Top Context Greeting & Auto-Sync Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="font-heading text-2xl sm:text-3xl font-bold text-[#103C34] tracking-tight">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 w-full max-w-full">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="font-heading text-2xl sm:text-3xl font-bold text-[#103C34] tracking-tight truncate">
               Hi, {user.name}
             </h1>
-            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#E6F3DD] text-[#174D42] border border-[#B8E4A5]/60">
-              PRO
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#E6F3DD] text-[#174D42] border border-[#B8E4A5]/60">
+              {workspaceMode === 'personal' ? 'PERSONAL LEDGER' : 'DEMO PRO'}
             </span>
           </div>
-          <p className="text-xs text-[#64756D] mt-0.5">
+          <p className="text-xs text-[#64756D] mt-0.5 truncate">
             Cycle: 1st - 30th Nov • Multi-wallet real-time ledger
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-[#DFE8DC] text-[11px] text-[#64756D]">
-            <span className="w-2 h-2 rounded-full bg-[#27865D] animate-pulse" />
-            <span>Auto-synced 3 mins ago</span>
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-white border border-[#DFE8DC] text-[11px] text-[#64756D]">
+            <span className="w-2 h-2 rounded-full bg-[#27865D] animate-pulse shrink-0" />
+            <span>Auto-synced</span>
           </div>
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#E6F3DD] border border-[#B8E4A5]/40 text-[11px] text-[#174D42] font-semibold">
-            <ShieldCheck className="w-3.5 h-3.5 text-[#27865D]" />
+            <ShieldCheck className="w-3.5 h-3.5 text-[#27865D] shrink-0" />
             <span>Encrypted Ledger</span>
           </div>
         </div>
       </div>
 
       {/* 1. HERO BALANCE CARD */}
-      <div className="relative overflow-hidden rounded-3xl bg-[#174D42] text-white p-5 sm:p-7 shadow-[0_20px_40px_-12px_rgba(16,60,52,0.22)]">
+      <div className="relative overflow-hidden rounded-3xl bg-[#174D42] text-white p-5 sm:p-7 shadow-[0_20px_40px_-12px_rgba(16,60,52,0.22)] w-full max-w-full">
         {/* Ambient Organic Layer Gradients */}
         <div className="absolute -top-24 -right-20 w-64 h-64 rounded-full bg-[#B8E4A5]/15 blur-3xl pointer-events-none" />
         <div className="absolute -bottom-24 -left-20 w-64 h-64 rounded-full bg-[#103C34]/80 blur-2xl pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col gap-5">
+        <div className="relative z-10 flex flex-col gap-4 sm:gap-5">
           {/* Balance Header Row */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -208,21 +248,21 @@ export function UserDashboardPage() {
           </div>
 
           {/* Main Balance Figure */}
-          <div className="flex items-baseline gap-2">
-            <span className="text-3xl sm:text-4xl font-bold text-[#B8E4A5] font-heading">₹</span>
-            <span className="text-4xl sm:text-5xl font-extrabold tracking-tight font-mono-num">
+          <div className="flex items-baseline gap-2 min-w-0">
+            <span className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#B8E4A5] font-heading">₹</span>
+            <span className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight font-mono-num truncate">
               {isBalanceHidden ? '••••••••' : totalAvailableBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
           </div>
 
           {/* Sub-metrics Asymmetric Pill Deck */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 pt-1">
             <div className="flex flex-col gap-1 p-3.5 rounded-2xl bg-[#B8E4A5] text-[#103C34] shadow-sm">
               <div className="flex items-center justify-between">
                 <span className="text-xs uppercase tracking-wide font-bold opacity-80">Safe to Spend</span>
                 <CheckCircle2 className="w-4 h-4 text-[#174D42]" />
               </div>
-              <span className="text-2xl font-bold font-mono-num">
+              <span className="text-xl sm:text-2xl font-bold font-mono-num truncate">
                 {isBalanceHidden ? '••••••' : `₹${safeToSpend.toLocaleString('en-IN')}`}
               </span>
               <span className="text-xs opacity-75 font-medium">Liquid for Nov</span>
@@ -233,7 +273,7 @@ export function UserDashboardPage() {
                 <span className="text-xs uppercase tracking-wide text-white/70 font-semibold">Reserved Bills</span>
                 <Lock className="w-4 h-4 text-white/70" />
               </div>
-              <span className="text-2xl font-bold font-mono-num">
+              <span className="text-xl sm:text-2xl font-bold font-mono-num truncate">
                 {isBalanceHidden ? '••••••' : `₹${reservedBills.toLocaleString('en-IN')}`}
               </span>
               <span className="text-xs text-white/70">Locked for auto-debit</span>
@@ -241,27 +281,27 @@ export function UserDashboardPage() {
           </div>
 
           {/* Quick Action Deck */}
-          <div className="grid grid-cols-3 gap-2 sm:gap-3 pt-1">
+          <div className="grid grid-cols-3 gap-1.5 sm:gap-3 pt-1 w-full max-w-full">
             <button
               onClick={() => setIsAddMoneyOpen(true)}
-              className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 transition-all text-white text-xs font-semibold"
+              className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-1 sm:px-2 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 transition-all text-white text-[11px] sm:text-xs font-semibold text-center min-w-0"
             >
-              <PlusCircle className="w-4 h-4 text-[#B8E4A5]" />
-              <span>Add Money</span>
+              <PlusCircle className="w-4 h-4 text-[#B8E4A5] shrink-0" />
+              <span className="truncate">Add Money</span>
             </button>
             <button
               onClick={() => setIsPayDuesOpen(true)}
-              className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl bg-[#F3D9A4] text-[#3B2C06] hover:bg-[#fae0aa] active:scale-95 transition-all text-xs font-bold shadow-sm"
+              className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-1 sm:px-2 rounded-xl bg-[#F3D9A4] text-[#3B2C06] hover:bg-[#fae0aa] active:scale-95 transition-all text-[11px] sm:text-xs font-bold shadow-sm text-center min-w-0"
             >
-              <CreditCardIcon className="w-4 h-4" />
-              <span>Pay Dues</span>
+              <CreditCardIcon className="w-4 h-4 shrink-0" />
+              <span className="truncate">Pay Dues</span>
             </button>
             <button
               onClick={() => setIsTransferOpen(true)}
-              className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 transition-all text-white text-xs font-semibold"
+              className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-1 sm:px-2 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 transition-all text-white text-[11px] sm:text-xs font-semibold text-center min-w-0"
             >
-              <ArrowUpRight className="w-4 h-4" />
-              <span>Transfer</span>
+              <ArrowUpRight className="w-4 h-4 shrink-0" />
+              <span className="truncate">Transfer</span>
             </button>
           </div>
         </div>
@@ -495,112 +535,138 @@ export function UserDashboardPage() {
             </Link>
           </div>
 
-          <div className="rounded-2xl bg-white p-5 border border-[#DFE8DC] shadow-sm flex items-center gap-5 min-h-[200px]">
+          <div className="rounded-2xl bg-white p-4 sm:p-5 border border-[#DFE8DC] shadow-sm flex flex-col sm:flex-row items-center gap-4 sm:gap-5 min-h-[200px] w-full max-w-full overflow-hidden">
             {/* SVG Donut Chart */}
             <div className="relative w-28 h-28 sm:w-32 sm:h-32 shrink-0 flex items-center justify-center">
               <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" fill="none" r="38" stroke="#dcf3ea" strokeWidth="12" />
-                {/* Groceries */}
-                <circle
-                  cx="50"
-                  cy="50"
-                  fill="none"
-                  r="38"
-                  stroke="#174d42"
-                  strokeWidth="12"
-                  strokeDasharray={`${grocLen} ${circum - grocLen}`}
-                  strokeDashoffset="0"
-                />
-                {/* Dining */}
-                <circle
-                  cx="50"
-                  cy="50"
-                  fill="none"
-                  r="38"
-                  stroke="#426835"
-                  strokeWidth="12"
-                  strokeDasharray={`${dinLen} ${circum - dinLen}`}
-                  strokeDashoffset={`${-grocLen}`}
-                />
-                {/* Discretionary */}
-                <circle
-                  cx="50"
-                  cy="50"
-                  fill="none"
-                  r="38"
-                  stroke="#9cd1c2"
-                  strokeWidth="12"
-                  strokeDasharray={`${discLen} ${circum - discLen}`}
-                  strokeDashoffset={`${-(grocLen + dinLen)}`}
-                />
-                {/* Fuel */}
-                <circle
-                  cx="50"
-                  cy="50"
-                  fill="none"
-                  r="38"
-                  stroke="#fae0aa"
-                  strokeWidth="12"
-                  strokeDasharray={`${fuelLen} ${circum - fuelLen}`}
-                  strokeDashoffset={`${-(grocLen + dinLen + discLen)}`}
-                />
-                {/* Subscriptions */}
-                <circle
-                  cx="50"
-                  cy="50"
-                  fill="none"
-                  r="38"
-                  stroke="#53421a"
-                  strokeWidth="12"
-                  strokeDasharray={`${subLen} ${circum - subLen}`}
-                  strokeDashoffset={`${-(grocLen + dinLen + discLen + fuelLen)}`}
-                />
+                <circle cx="50" cy="50" fill="none" r="38" stroke="#EDF3E9" strokeWidth="12" />
+                {isSpendingEmpty ? (
+                  <circle cx="50" cy="50" fill="none" r="38" stroke="#B8E4A5" strokeWidth="12" strokeDasharray="238.76" strokeDashoffset="0" />
+                ) : (
+                  <>
+                    {/* Groceries */}
+                    <circle
+                      cx="50"
+                      cy="50"
+                      fill="none"
+                      r="38"
+                      stroke="#174d42"
+                      strokeWidth="12"
+                      strokeDasharray={`${grocLen} ${circum - grocLen}`}
+                      strokeDashoffset="0"
+                    />
+                    {/* Dining */}
+                    <circle
+                      cx="50"
+                      cy="50"
+                      fill="none"
+                      r="38"
+                      stroke="#426835"
+                      strokeWidth="12"
+                      strokeDasharray={`${dinLen} ${circum - dinLen}`}
+                      strokeDashoffset={`${-grocLen}`}
+                    />
+                    {/* Discretionary */}
+                    <circle
+                      cx="50"
+                      cy="50"
+                      fill="none"
+                      r="38"
+                      stroke="#9cd1c2"
+                      strokeWidth="12"
+                      strokeDasharray={`${discLen} ${circum - discLen}`}
+                      strokeDashoffset={`${-(grocLen + dinLen)}`}
+                    />
+                    {/* Fuel */}
+                    <circle
+                      cx="50"
+                      cy="50"
+                      fill="none"
+                      r="38"
+                      stroke="#fae0aa"
+                      strokeWidth="12"
+                      strokeDasharray={`${fuelLen} ${circum - fuelLen}`}
+                      strokeDashoffset={`${-(grocLen + dinLen + discLen)}`}
+                    />
+                    {/* Subscriptions */}
+                    <circle
+                      cx="50"
+                      cy="50"
+                      fill="none"
+                      r="38"
+                      stroke="#53421a"
+                      strokeWidth="12"
+                      strokeDasharray={`${subLen} ${circum - subLen}`}
+                      strokeDashoffset={`${-(grocLen + dinLen + discLen + fuelLen)}`}
+                    />
+                  </>
+                )}
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
                 <span className="text-[10px] text-[#64756D] font-medium">Spent</span>
                 <span className="text-sm sm:text-base font-bold text-[#103C34] font-mono-num">
-                  ₹{(totalSpentThisCycle / 1000).toFixed(1)}k
+                  ₹{isSpendingEmpty ? '0' : (totalSpentThisCycle / 1000).toFixed(1) + 'k'}
                 </span>
               </div>
             </div>
 
             {/* Legend Column */}
-            <div className="flex-1 space-y-1.5 text-xs min-w-0">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 truncate">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#174D42] shrink-0" />
-                  <span className="truncate">Groceries</span>
+            <div className="w-full sm:flex-1 space-y-1.5 text-xs min-w-0">
+              {isSpendingEmpty ? (
+                <div className="space-y-2">
+                  <div className="p-3 rounded-xl bg-[#E6F3DD]/60 border border-[#B8E4A5]/40 text-[#174D42] text-xs">
+                    <p className="font-semibold">Clean Slate Active</p>
+                    <p className="text-[11px] text-[#64756D] mt-0.5">
+                      No expenses logged this cycle yet. All ₹{safeToSpend.toLocaleString('en-IN')} available balance is safe to spend!
+                    </p>
+                  </div>
+                  <Link
+                    to="/app/transactions/new"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#174D42] hover:underline"
+                  >
+                    <PlusCircle className="w-3.5 h-3.5 text-[#27865D]" />
+                    <span>Record your first expense</span>
+                  </Link>
                 </div>
-                <span className="font-semibold font-mono-num shrink-0">₹{grocerySpend.toLocaleString('en-IN')}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 truncate">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#426835] shrink-0" />
-                  <span className="truncate">Dining &amp; Food</span>
-                </div>
-                <span className="font-semibold font-mono-num shrink-0">₹{diningSpend.toLocaleString('en-IN')}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 truncate">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#9CD1C2] shrink-0" />
-                  <span className="truncate">Discretionary</span>
-                </div>
-                <span className="font-semibold font-mono-num shrink-0">₹{discSpend.toLocaleString('en-IN')}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 truncate">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#fae0aa] shrink-0" />
-                  <span className="truncate">Fuel &amp; Transit</span>
-                </div>
-                <span className="font-semibold font-mono-num shrink-0">₹{fuelSpend.toLocaleString('en-IN')}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 truncate">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#53421a] shrink-0" />
-                  <span className="truncate">Subscriptions</span>
-                </div>
-                <span className="font-semibold font-mono-num shrink-0">₹{subSpend.toLocaleString('en-IN')}</span>
-              </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 truncate">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#174D42] shrink-0" />
+                      <span className="truncate">Groceries</span>
+                    </div>
+                    <span className="font-semibold font-mono-num shrink-0">₹{grocerySpend.toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 truncate">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#426835] shrink-0" />
+                      <span className="truncate">Dining &amp; Food</span>
+                    </div>
+                    <span className="font-semibold font-mono-num shrink-0">₹{diningSpend.toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 truncate">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#9CD1C2] shrink-0" />
+                      <span className="truncate">Discretionary</span>
+                    </div>
+                    <span className="font-semibold font-mono-num shrink-0">₹{discSpend.toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 truncate">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#fae0aa] shrink-0" />
+                      <span className="truncate">Fuel &amp; Transit</span>
+                    </div>
+                    <span className="font-semibold font-mono-num shrink-0">₹{fuelSpend.toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 truncate">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#53421a] shrink-0" />
+                      <span className="truncate">Subscriptions</span>
+                    </div>
+                    <span className="font-semibold font-mono-num shrink-0">₹{subSpend.toLocaleString('en-IN')}</span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -616,54 +682,75 @@ export function UserDashboardPage() {
           </Link>
         </div>
 
-        <div className="space-y-2">
-          {transactions.slice(0, 3).map((tx) => (
-            <div
-              key={tx.id}
-              className="flex items-center justify-between p-3.5 rounded-2xl bg-white border border-[#DFE8DC] hover:bg-[#F6F8F1] transition-colors shadow-sm"
+        {transactions.length === 0 ? (
+          <div className="p-8 rounded-2xl bg-white border border-[#DFE8DC] text-center flex flex-col items-center justify-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-[#E6F3DD] text-[#174D42] flex items-center justify-center">
+              <ReceiptText className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="font-heading text-sm font-bold text-[#103C34]">No Transactions Recorded Yet</h3>
+              <p className="text-xs text-[#64756D] max-w-sm mt-0.5">
+                Your personal ledger is clean and ready. Click below to record your first income or expense.
+              </p>
+            </div>
+            <Link
+              to="/app/transactions/new"
+              className="px-4 py-2 rounded-xl bg-[#174D42] text-white text-xs font-bold hover:bg-[#103C34] flex items-center gap-1.5 shadow-sm transition-all"
             >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-[#dcf3ea] flex items-center justify-center text-[#174D42] shrink-0">
-                  {tx.category.includes('Food') || tx.category.includes('Dining') ? (
-                    <Coffee className="w-5 h-5" />
-                  ) : tx.category.includes('Fuel') ? (
-                    <Fuel className="w-5 h-5 text-[#3b2c06]" />
+              <PlusCircle className="w-4 h-4 text-[#B8E4A5]" />
+              <span>+ Add Your First Expense</span>
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {transactions.slice(0, 4).map((tx) => (
+              <div
+                key={tx.id}
+                className="flex items-center justify-between p-3 sm:p-3.5 rounded-2xl bg-white border border-[#DFE8DC] hover:bg-[#F6F8F1] transition-colors shadow-sm gap-2 min-w-0 overflow-hidden"
+              >
+                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#dcf3ea] flex items-center justify-center text-[#174D42] shrink-0">
+                    {tx.category.includes('Food') || tx.category.includes('Dining') ? (
+                      <Coffee className="w-4 h-4 sm:w-5 sm:h-5" />
+                    ) : tx.category.includes('Fuel') ? (
+                      <Fuel className="w-4 h-4 sm:w-5 sm:h-5 text-[#3b2c06]" />
+                    ) : (
+                      <Briefcase className="w-4 h-4 sm:w-5 sm:h-5 text-[#27865D]" />
+                    )}
+                  </div>
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs sm:text-sm font-bold text-[#1C302A] truncate">{tx.title}</span>
+                      {tx.cashbackEarned ? (
+                        <span className="px-1.5 py-0.2 rounded bg-[#c2efaf]/60 text-[#2b4f20] text-[10px] font-bold shrink-0">
+                          5% Back
+                        </span>
+                      ) : null}
+                    </div>
+                    <span className="text-[11px] text-[#64756D] truncate">
+                      {tx.category} • {tx.date} • {tx.paymentMethod}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="text-right shrink-0">
+                  <span
+                    className={`text-xs sm:text-sm font-bold font-mono-num ${
+                      tx.type === 'income' ? 'text-[#27865D]' : 'text-[#1C302A]'
+                    }`}
+                  >
+                    {tx.type === 'income' ? '+' : '-'}₹{tx.amount.toLocaleString('en-IN')}
+                  </span>
+                  {tx.cashbackEarned ? (
+                    <p className="text-[10px] text-[#426835] font-medium">+₹{tx.cashbackEarned} saved</p>
                   ) : (
-                    <Briefcase className="w-5 h-5 text-[#27865D]" />
+                    <p className="text-[10px] text-[#64756D]">{tx.status}</p>
                   )}
                 </div>
-                <div className="flex flex-col min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs sm:text-sm font-bold text-[#1C302A] truncate">{tx.title}</span>
-                    {tx.cashbackEarned ? (
-                      <span className="px-1.5 py-0.2 rounded bg-[#c2efaf]/60 text-[#2b4f20] text-[10px] font-bold">
-                        5% Back
-                      </span>
-                    ) : null}
-                  </div>
-                  <span className="text-[11px] text-[#64756D] truncate">
-                    {tx.category} • {tx.date} • {tx.paymentMethod}
-                  </span>
-                </div>
               </div>
-
-              <div className="text-right shrink-0">
-                <span
-                  className={`text-xs sm:text-sm font-bold font-mono-num ${
-                    tx.type === 'income' ? 'text-[#27865D]' : 'text-[#1C302A]'
-                  }`}
-                >
-                  {tx.type === 'income' ? '+' : '-'}₹{tx.amount.toLocaleString('en-IN')}
-                </span>
-                {tx.cashbackEarned ? (
-                  <p className="text-[10px] text-[#426835] font-medium">+₹{tx.cashbackEarned} saved</p>
-                ) : (
-                  <p className="text-[10px] text-[#64756D]">{tx.status}</p>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* 6. AI INSIGHT & LIFE MOMENT PREVIEW */}

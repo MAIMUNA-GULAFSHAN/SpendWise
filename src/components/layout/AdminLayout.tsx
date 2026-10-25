@@ -43,7 +43,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F6F8F1] text-[#1C302A] flex flex-col antialiased">
+    <div className="min-h-screen bg-[#F6F8F1] text-[#1C302A] flex flex-col antialiased w-full max-w-full overflow-x-hidden">
       {/* Admin Top Header */}
       <header className="sticky top-0 z-40 bg-[#103C34] text-white border-b border-[#174D42] shadow-sm">
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
@@ -92,7 +92,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       </header>
 
       {/* Admin Body */}
-      <div className="flex-1 flex max-w-[1600px] w-full mx-auto">
+      <div className="flex-1 flex max-w-[1600px] w-full mx-auto overflow-x-hidden">
         {/* Desktop Admin Sidebar */}
         <aside className="hidden lg:flex flex-col w-64 shrink-0 border-r border-[#DFE8DC] bg-white p-4 sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto">
           <div className="text-[11px] font-bold uppercase tracking-wider text-[#64756D] px-3 mb-3">
@@ -184,7 +184,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         )}
 
         {/* Admin Content Area */}
-        <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8">
+        <main className="flex-1 min-w-0 w-full max-w-full overflow-x-hidden p-3.5 sm:p-6 lg:p-8">
           {children}
         </main>
       </div>

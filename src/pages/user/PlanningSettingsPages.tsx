@@ -365,12 +365,13 @@ export function WishlistPage() {
    5. PROFILE & SETTINGS PAGE (/app/settings)
 ========================================================================= */
 export function SettingsPage() {
-  const { user, setUser, resetDemoData } = useApp();
+  const { user, setUser, workspaceMode, startCleanWorkspace, loadDemoWorkspace, resetDemoData } = useApp();
   const [name, setName] = useState(user.name);
   const [salary, setSalary] = useState(`${user.monthlySalary}`);
   const [payday, setPayday] = useState(`${user.paydayDate || 30}`);
   const [saved, setSaved] = useState(false);
   const [resetConfirm, setResetConfirm] = useState(false);
+  const [cleanConfirm, setCleanConfirm] = useState(false);
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -384,8 +385,18 @@ export function SettingsPage() {
     setTimeout(() => setSaved(false), 2500);
   };
 
+  const handleStartClean = () => {
+    startCleanWorkspace({
+      name: name.trim() || 'Personal User',
+      monthlySalary: parseFloat(salary) || 50000,
+      paydayDate: parseInt(payday) || 30,
+    });
+    setCleanConfirm(true);
+    setTimeout(() => setCleanConfirm(false), 2500);
+  };
+
   const handleReset = () => {
-    resetDemoData();
+    loadDemoWorkspace();
     setResetConfirm(true);
     setTimeout(() => setResetConfirm(false), 2500);
   };
@@ -406,10 +417,17 @@ export function SettingsPage() {
         </div>
       )}
 
+      {cleanConfirm && (
+        <div className="p-4 rounded-2xl bg-[#E6F3DD] border border-[#B8E4A5] text-xs font-bold text-[#174D42] flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-[#27865D]" />
+          <span>Clean personal workspace created with 0 transactions! Ready for your expenses.</span>
+        </div>
+      )}
+
       {resetConfirm && (
         <div className="p-4 rounded-2xl bg-[#E6F3DD] border border-[#B8E4A5] text-xs font-bold text-[#174D42] flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 text-[#27865D]" />
-          <span>Workspace reset to original Stitch prototype state!</span>
+          <span>Workspace switched to sample demo data (Rohan Sharma)!</span>
         </div>
       )}
 
@@ -421,11 +439,13 @@ export function SettingsPage() {
             className="w-16 h-16 rounded-full object-cover border-2 border-[#174D42]"
           />
           <div>
-            <h3 className="font-heading font-bold text-lg text-[#103C34]">{user.name}</h3>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="font-heading font-bold text-lg text-[#103C34]">{user.name}</h3>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#E6F3DD] text-[#174D42] border border-[#B8E4A5]/60">
+                {workspaceMode === 'personal' ? 'PERSONAL CLEAN LEDGER' : 'DEMO MODE'}
+              </span>
+            </div>
             <p className="text-xs text-[#64756D]">{user.email}</p>
-            <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#E6F3DD] text-[#174D42] mt-1">
-              PRO MEMBER
-            </span>
           </div>
         </div>
 
@@ -474,15 +494,26 @@ export function SettingsPage() {
           </div>
         </div>
 
-        <div className="pt-4 border-t border-[#DFE8DC] flex flex-wrap items-center justify-between gap-4">
-          <button
-            type="button"
-            onClick={handleReset}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#EDF3E9] text-xs font-semibold text-[#174D42] hover:bg-[#E6F3DD]"
-          >
-            <RotateCcw className="w-4 h-4" />
-            <span>Restore Original Stitch Prototype Data</span>
-          </button>
+        <div className="pt-4 border-t border-[#DFE8DC] flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={handleStartClean}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#E6F3DD] text-xs font-bold text-[#174D42] border border-[#B8E4A5]/60 hover:bg-[#B8E4A5]/40 transition-colors"
+            >
+              <PlusCircle className="w-4 h-4 text-[#27865D]" />
+              <span>Start Clean (0 Transactions)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleReset}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#EDF3E9] text-xs font-semibold text-[#64756D] hover:bg-[#E6F3DD] transition-colors"
+            >
+              <RotateCcw className="w-4 h-4" />
+              <span>Load Sample Demo Data</span>
+            </button>
+          </div>
 
           <button
             type="submit"

@@ -5,13 +5,16 @@ import { Wallet, Lock, Mail, ArrowRight, ShieldCheck, User } from 'lucide-react'
 
 export function LoginPage() {
   const { navigate } = useRouter();
-  const { login } = useApp();
-  const [email, setEmail] = useState('rohan.sharma@spendwise.app');
-  const [password, setPassword] = useState('••••••••••••');
+  const { login, startCleanWorkspace, loadDemoWorkspace } = useApp();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    login(email);
+    const finalEmail = email.trim() || 'me@spendwise.app';
+    const extractedName = finalEmail.split('@')[0];
+    const capitalized = extractedName.charAt(0).toUpperCase() + extractedName.slice(1);
+    login(finalEmail, capitalized);
     navigate('/app/dashboard');
   };
 
@@ -22,8 +25,8 @@ export function LoginPage() {
           <div className="w-12 h-12 rounded-2xl bg-[#174D42] text-[#B8E4A5] flex items-center justify-center shadow-sm mb-3">
             <Wallet className="w-6 h-6" />
           </div>
-          <h1 className="font-heading text-2xl font-bold text-[#103C34]">Welcome back</h1>
-          <p className="text-xs text-[#64756D] mt-1">Sign in to your encrypted SpendWise financial workspace</p>
+          <h1 className="font-heading text-2xl font-bold text-[#103C34]">Welcome to SpendWise</h1>
+          <p className="text-xs text-[#64756D] mt-1">Sign in or initialize your clean personal expense ledger</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -33,10 +36,11 @@ export function LoginPage() {
               <Mail className="w-4 h-4 text-[#64756D] absolute left-3.5 top-3" />
               <input
                 type="email"
+                placeholder="your.email@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-[#EDF3E9] border border-[#DFE8DC] text-xs font-medium text-[#1C302A] focus:bg-white focus:outline-none focus:border-[#174D42]"
+                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-[#EDF3E9] border border-[#DFE8DC] text-xs font-medium text-[#1C302A] placeholder:text-[#64756D]/60 focus:bg-white focus:outline-none focus:border-[#174D42]"
               />
             </div>
           </div>
@@ -52,10 +56,11 @@ export function LoginPage() {
               <Lock className="w-4 h-4 text-[#64756D] absolute left-3.5 top-3" />
               <input
                 type="password"
+                placeholder="••••••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-[#EDF3E9] border border-[#DFE8DC] text-xs font-medium text-[#1C302A] focus:bg-white focus:outline-none focus:border-[#174D42]"
+                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-[#EDF3E9] border border-[#DFE8DC] text-xs font-medium text-[#1C302A] placeholder:text-[#64756D]/60 focus:bg-white focus:outline-none focus:border-[#174D42]"
               />
             </div>
           </div>
@@ -69,22 +74,38 @@ export function LoginPage() {
           </button>
         </form>
 
-        <div className="mt-4 p-3 rounded-2xl bg-[#E6F3DD]/60 border border-[#B8E4A5]/40 text-xs text-[#174D42] flex items-center justify-between">
-          <span>Demo Account:</span>
+        {/* Quick Launch Options */}
+        <div className="mt-5 pt-5 border-t border-[#DFE8DC] space-y-2.5">
           <button
             type="button"
             onClick={() => {
-              setEmail('rohan.sharma@spendwise.app');
-              login('rohan.sharma@spendwise.app', 'Rohan');
+              startCleanWorkspace({
+                name: 'Personal User',
+                email: 'user@spendwise.app',
+                monthlySalary: 50000,
+                startingBalance: 30000,
+              });
               navigate('/app/dashboard');
             }}
-            className="font-bold underline"
+            className="w-full py-2.5 px-3 rounded-xl bg-[#E6F3DD] text-[#174D42] border border-[#B8E4A5]/60 hover:bg-[#B8E4A5]/40 transition-all text-xs font-bold flex items-center justify-center gap-2"
           >
-            One-Click Sign In (Rohan)
+            <ShieldCheck className="w-4 h-4 text-[#27865D]" />
+            <span>Launch Clean Workspace (0 Transactions, Ready for Expenses)</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              loadDemoWorkspace();
+              navigate('/app/dashboard');
+            }}
+            className="w-full py-2 px-3 rounded-xl bg-transparent text-[#64756D] hover:bg-[#EDF3E9] text-xs font-medium transition-colors text-center"
+          >
+            Preview Sample Demo Data (Rohan Sharma)
           </button>
         </div>
 
-        <div className="mt-6 pt-6 border-t border-[#DFE8DC] text-center text-xs text-[#64756D]">
+        <div className="mt-5 pt-4 border-t border-[#DFE8DC] text-center text-xs text-[#64756D]">
           Don't have an account yet?{' '}
           <Link to="/register" className="font-bold text-[#174D42] hover:underline">
             Create Free Account
@@ -102,15 +123,25 @@ export function LoginPage() {
 
 export function RegisterPage() {
   const { navigate } = useRouter();
-  const { registerUser } = useApp();
-  const [name, setName] = useState('Priya Mukherjee');
-  const [email, setEmail] = useState('priya.m@horizonfin.com');
-  const [password, setPassword] = useState('••••••••••••');
+  const { startCleanWorkspace } = useApp();
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [salary, setSalary] = useState('50000');
+  const [startingBalance, setStartingBalance] = useState('30000');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    registerUser(name, email, 55000, 30);
-    navigate('/onboarding');
+    const finalName = name.trim() || 'Personal User';
+    const finalEmail = email.trim() || 'me@spendwise.app';
+    startCleanWorkspace({
+      name: finalName,
+      email: finalEmail,
+      monthlySalary: parseFloat(salary) || 50000,
+      startingBalance: parseFloat(startingBalance) || 30000,
+      paydayDate: 30,
+    });
+    navigate('/app/dashboard');
   };
 
   return (
@@ -257,19 +288,24 @@ export function ForgotPasswordPage() {
 
 export function OnboardingPage() {
   const { navigate } = useRouter();
-  const { setUser } = useApp();
+  const { user, startCleanWorkspace } = useApp();
   const [step, setStep] = useState(1);
-  const [salary, setSalary] = useState('45000');
+  const [salary, setSalary] = useState('50000');
   const [payday, setPayday] = useState('30');
   const [primaryBank, setPrimaryBank] = useState('HDFC Bank');
+  const [startingBalance, setStartingBalance] = useState('35000');
   const [creditCard, setCreditCard] = useState('HDFC Regalia Gold');
 
   const handleFinish = () => {
-    setUser((prev) => ({
-      ...prev,
-      monthlySalary: parseFloat(salary),
-      paydayDate: parseInt(payday),
-    }));
+    startCleanWorkspace({
+      name: user?.name && user.name !== 'Rohan' ? user.name : 'Personal User',
+      email: user?.email && !user.email.includes('rohan') ? user.email : 'user@spendwise.app',
+      monthlySalary: parseFloat(salary) || 50000,
+      paydayDate: parseInt(payday) || 30,
+      startingBalance: parseFloat(startingBalance) || 35000,
+      bankName: primaryBank,
+      primaryCardName: creditCard,
+    });
     navigate('/app/dashboard');
   };
 
@@ -332,7 +368,7 @@ export function OnboardingPage() {
               onClick={() => setStep(2)}
               className="w-full py-3 rounded-xl bg-[#174D42] text-white text-xs font-bold hover:bg-[#103C34] flex items-center justify-center gap-2 mt-4"
             >
-              <span>Next: Primary Account</span>
+              <span>Next: Primary Account &amp; Balance</span>
               <ArrowRight className="w-4 h-4 text-[#B8E4A5]" />
             </button>
           </div>
@@ -341,8 +377,8 @@ export function OnboardingPage() {
         {step === 2 && (
           <div className="space-y-4">
             <div>
-              <h2 className="font-heading text-xl font-bold text-[#103C34]">Primary Salary Account</h2>
-              <p className="text-xs text-[#64756D] mt-1">Connect where your payroll lands for auto-balancing.</p>
+              <h2 className="font-heading text-xl font-bold text-[#103C34]">Primary Salary Account &amp; Balance</h2>
+              <p className="text-xs text-[#64756D] mt-1">Set your starting bank balance to begin tracking expenses from today.</p>
             </div>
 
             <div>
@@ -355,12 +391,24 @@ export function OnboardingPage() {
                 <option value="HDFC Bank">HDFC Bank Salary Account</option>
                 <option value="ICICI Bank">ICICI Bank Wealth Management</option>
                 <option value="Axis Bank">Axis Bank Burgundy</option>
-                <option value="SBI">State Bank of India</option>
+                <option value="State Bank of India">State Bank of India</option>
+                <option value="Kotak Mahindra Bank">Kotak Mahindra Bank</option>
               </select>
             </div>
 
+            <div>
+              <label className="block text-xs font-semibold text-[#1C302A] mb-1.5">Current Available Balance (₹)</label>
+              <input
+                type="number"
+                value={startingBalance}
+                onChange={(e) => setStartingBalance(e.target.value)}
+                placeholder="35000"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[#EDF3E9] border border-[#DFE8DC] text-sm font-bold text-[#1C302A] font-mono-num"
+              />
+            </div>
+
             <div className="p-3.5 rounded-2xl bg-[#EDF3E9] border border-[#DFE8DC] text-xs text-[#64756D]">
-              SpendWise uses simulated encrypted Open-Banking mock sync with zero external credentials storage.
+              SpendWise will track all new transactions against this balance with zero past demo transactions.
             </div>
 
             <div className="flex items-center gap-3 mt-4">
@@ -374,7 +422,7 @@ export function OnboardingPage() {
                 onClick={() => setStep(3)}
                 className="flex-1 py-3 rounded-xl bg-[#174D42] text-white text-xs font-bold hover:bg-[#103C34] flex items-center justify-center gap-2"
               >
-                <span>Next: Cards &amp; Dues</span>
+                <span>Next: Cards &amp; Limits</span>
                 <ArrowRight className="w-4 h-4 text-[#B8E4A5]" />
               </button>
             </div>
@@ -384,8 +432,8 @@ export function OnboardingPage() {
         {step === 3 && (
           <div className="space-y-4">
             <div>
-              <h2 className="font-heading text-xl font-bold text-[#103C34]">Credit Card &amp; Bill Obligations</h2>
-              <p className="text-xs text-[#64756D] mt-1">Add your primary card to automatically reserve due amounts.</p>
+              <h2 className="font-heading text-xl font-bold text-[#103C34]">Credit Card Setup</h2>
+              <p className="text-xs text-[#64756D] mt-1">Add your primary card with 0 starting balance due.</p>
             </div>
 
             <div>
@@ -398,13 +446,14 @@ export function OnboardingPage() {
                 <option value="HDFC Regalia Gold">HDFC Regalia Gold (Limit ₹1,50,000)</option>
                 <option value="ICICI Amazon Pay">ICICI Amazon Pay (Limit ₹1,00,000)</option>
                 <option value="Axis Magnus">Axis Magnus (Limit ₹3,50,000)</option>
+                <option value="SBI Cashback Card">SBI Cashback Card (Limit ₹1,00,000)</option>
               </select>
             </div>
 
             <div className="p-4 rounded-2xl bg-[#E6F3DD] border border-[#B8E4A5] text-xs text-[#174D42] space-y-1">
-              <div className="font-bold">Setup Complete!</div>
+              <div className="font-bold">Setup Ready for Your Expenses!</div>
               <p className="text-[11px] text-[#64756D]">
-                Your runway will start with ₹42,850 available balance, reserving ₹24,500 for bills and unlocking ₹18,350 safe-to-spend.
+                Your workspace will start with ₹{parseFloat(startingBalance || '0').toLocaleString('en-IN')} available balance and 0 past transactions, ready to record your real spending.
               </p>
             </div>
 
@@ -412,7 +461,7 @@ export function OnboardingPage() {
               onClick={handleFinish}
               className="w-full py-3.5 rounded-xl bg-[#174D42] text-white text-xs font-bold hover:bg-[#103C34] shadow-md flex items-center justify-center gap-2 mt-4"
             >
-              <span>Launch SpendWise Workspace</span>
+              <span>Launch Clean Personal Workspace</span>
               <ArrowRight className="w-4 h-4 text-[#B8E4A5]" />
             </button>
           </div>
